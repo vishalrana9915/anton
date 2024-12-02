@@ -1,35 +1,42 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"log"
+	"path/filepath"
 
-// Config struct for application settings
-type Config struct {
-	AppName     string `json:"APP_NAME"`
-	Environment string `json:"ENVIRONMENT"`
-	DatabaseURL string `json:"DATABASE_URL"`
-	ServerPort  string `json:"SERVER_PORT"`
-}
+	"github.com/spf13/viper"
+)
 
 // LoadConfig loads the configuration from the environment or `.env` file
-func LoadConfig(path string) (*Config, error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("")
+func LoadConfig() {
+
+	// Dynamically find the root directory
+	rootPath, err := filepath.Abs(".")
+	if err != nil {
+		log.Fatalf("Error finding root path: %s", err)
+	}
+
+	// Specify the file name and type
+	viper.SetConfigFile(".env")
 	viper.SetConfigType("env")
 
-	// Automatic binding from environment variables
-	viper.AutomaticEnv()
+	// Add the root directory as a search path
+	viper.AddConfigPath(rootPath)
 
-	if err := viper.ReadInConfig(); err != nil {
-		// Allow missing config file if env vars are set
-		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
-			return nil, err
-		}
+	// Read the config file
+	err = viper.ReadInConfig()
+	if err != nil {
+		log.Fatalf("Error reading .env file: %s", err)
 	}
 
-	var cfg Config
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return nil, err
-	}
+}
 
-	return &cfg, nil
+// GetConfig retrieves the value for the given key
+func GetConfig(key string, baseValue string) string {
+	envValue := viper.GetString(key)
+
+	if envValue == "" {
+		return baseValue
+	}
+	return envValue
 }

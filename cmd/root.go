@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -11,13 +12,12 @@ import (
 func Execute() {
 
 	// Load configuration
-	cfg, err := config.LoadConfig(".env")
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
+	config.LoadConfig()
+
+	fmt.Printf("Starting up ->%s \n", config.GetConfig("APP_NAME", ""))
 
 	// Initialize database connection
-	dbConn, err := db.NewConnection(cfg.DatabaseURL)
+	dbConn, err := db.NewConnection(config.GetConfig("DATABASE_URL", ""))
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
@@ -31,7 +31,7 @@ func Execute() {
 		})
 	})
 
-	r.Run()
+	r.Run(config.GetConfig("APP_PORT", ":3005")) // listen and serve on
 	// Example of starting your application (e.g., API server or worker)
 	log.Println("Application is running...")
 
